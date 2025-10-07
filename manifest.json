@@ -1,0 +1,37 @@
+{
+    "name": "Personal Walking Time Estimator",
+    "short_name": "WalkEstimator",
+    "description": "Get accurate walking time estimates based on your personal speed data",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjNjY3ZWVhIiByeD0iMjQiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMy41IDUuNUMxMy41IDYuMzI4IDEyLjgyOCA3IDEyIDdTMTAuNSA2LjMyOCAxMC41IDUuNVMxMS4xNzIgNCAxMiA0UzEzLjUgNC42NzIgMTMuNSA1LjVaTTkuNSAxMUwxMC4wODggOS4yMTZDMTAuMzMgOC42NDggMTAuODcgOC4yNSAxMS41IDguMjVIMTIuNUMxMy4xMyA4LjI1IDEzLjY3IDguNjQ4IDEzLjkxMiA5LjIxNkwxNC41IDExVjEzLjVDMTQuNSAxNC4zMjggMTMuODI4IDE1IDEzIDE1UzExLjUgMTQuMzI4IDExLjUgMTMuNVYxMi41SDEwLjVWMTYuNUMxMC41IDE3LjMyOCA5LjgyOCAxOCA5IDE4UzcuNSAxNy4zMjggNy41IDE2LjVWMTBIMTVWMTZIMTcuNVYxMC41QzE3LjUgMTAuMjI0IDE3LjI3NiAxMCAxNyAxMEg5LjVaIi8+Cjwvc3ZnPgo8L3N2Zz4K",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNjY3ZWVhIiByeD0iNjQiLz4KPHN2ZyB4PSIxMjgiIHk9IjEyOCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPgo8cGF0aCBkPSJNMTMuNSA1LjVDMTMuNSA2LjMyOCAxMi44MjggNyAxMiA3UzEwLjUgNi4zMjggMTAuNSA1LjVTMTEuMTcyIDQgMTIgNFMxMy41IDQuNjcyIDEzLjUgNS41Wk05LjUgMTFMMTAuMDg4IDkuMjE2QzEwLjMzIDguNjQ4IDEwLjg3IDguMjUgMTEuNSA4LjI1SDEyLjVDMTMuMTMgOC4yNSAxMy42NyA4LjY0OCAxMy45MTIgOS4yMTZMMTQuNSAxMVYxMy41QzE0LjUgMTQuMzI4IDEzLjgyOCAxNSAxMyAxNVMxMS41IDE0LjMyOCAxMS41IDEzLjVWMTIuNUgxMC41VjE2LjVDMTAuNSAxNy4zMjggOS44MjggMTggOSAxOFM3LjUgMTcuMzI4IDcuNSAxNi41VjEwSDE1VjE2SDE3LjVWMTAuNUMxNy41IDEwLjIyNCAxNy4yNzYgMTAgMTcgMTBIOS41WiIvPgo8L3N2Zz4KPC9zdmc+Cg==",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        }
+    ],
+    "categories": ["navigation", "health", "fitness"],
+    "screenshots": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjU2OCIgdmlld0JveD0iMCAwIDMyMCA1NjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iNTY4IiBmaWxsPSIjZjVmNWY1Ii8+CjxyZWN0IHg9IjIwIiB5PSI2MCIgd2lkdGg9IjI4MCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzY2N2VlYSIgcng9IjgiLz4KPHN2ZyB4PSIyMCIgeT0iMTIwIiB3aWR0aD0iMjgwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI4MCAxNTAiIGZpbGw9IiNlZWUiPgo8L3N2Zz4KPHN2ZyB4PSIyMCIgeT0iMjkwIiB3aWR0aD0iMjgwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDI4MCAyMDAiIGZpbGw9IiNmOGY5ZmEiPgo8L3N2Zz4KPC9zdmc+",
+            "sizes": "320x568",
+            "type": "image/svg+xml",
+            "form_factor": "narrow"
+        }
+    ],
+    "features": [
+        "GPS tracking",
+        "Machine learning",
+        "Offline support",
+        "Route planning"
+    ]
+}
