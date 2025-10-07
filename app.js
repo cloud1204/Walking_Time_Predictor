@@ -11,6 +11,7 @@ class WalkingTimeEstimator {
         this.lastPosition = null;
         this.speedBuffer = []; // Buffer for smooth speed calculations
         this.totalDistanceWalked = 0;
+        this.currentLocationMarker = null; // Store marker for current location
         
         // Load saved data or initialize with sample data
         this.speedData = this.loadSpeedData();
@@ -21,9 +22,12 @@ class WalkingTimeEstimator {
     
     // Initialize Google Maps
     initMap() {
+        // Use config values
+        const config = window.APP_CONFIG;
+        
         this.map = new google.maps.Map(document.getElementById('map'), {
-            center: { lat: 24.8138, lng: 120.9675 }, // Hsinchu, Taiwan
-            zoom: 13,
+            center: config.DEFAULT_CENTER,
+            zoom: config.MAP_SETTINGS.zoom,
             styles: [
                 {
                     featureType: "poi",
@@ -36,9 +40,7 @@ class WalkingTimeEstimator {
                     stylers: [{ visibility: "off" }]
                 }
             ],
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false
+            ...config.MAP_SETTINGS
         });
         
         this.directionsService = new google.maps.DirectionsService();
@@ -73,15 +75,36 @@ class WalkingTimeEstimator {
     }
     
     // Initialize autocomplete for address inputs
-    initAutocomplete() {
+    async initAutocomplete() {
         const startInput = document.getElementById('start');
         const endInput = document.getElementById('end');
         
-        const startAutocomplete = new google.maps.places.Autocomplete(startInput);
-        const endAutocomplete = new google.maps.places.Autocomplete(endInput);
+        // For now, continue using the legacy Autocomplete API
+        // It still works and will be supported for at least 12 months
+        // The new PlaceAutocompleteElement is a web component that works differently
         
-        startAutocomplete.bindTo('bounds', this.map);
-        endAutocomplete.bindTo('bounds', this.map);
+        try {
+            const startAutocomplete = new google.maps.places.Autocomplete(startInput, {
+                fields: ['formatted_address', 'geometry', 'name'],
+                types: ['geocode', 'establishment']
+            });
+            
+            const endAutocomplete = new google.maps.places.Autocomplete(endInput, {
+                fields: ['formatted_address', 'geometry', 'name'],
+                types: ['geocode', 'establishment']
+            });
+            
+            startAutocomplete.bindTo('bounds', this.map);
+            endAutocomplete.bindTo('bounds', this.map);
+            
+            // Store references for potential future migration
+            this.startAutocomplete = startAutocomplete;
+            this.endAutocomplete = endAutocomplete;
+            
+        } catch (error) {
+            console.error('Error initializing autocomplete:', error);
+            this.showMessage('Address autocomplete may not work properly. You can still enter addresses manually.', 'warning');
+        }
     }
     
     // Calculate route between two points
@@ -280,11 +303,7 @@ class WalkingTimeEstimator {
         this.speedBuffer = [];
         this.totalDistanceWalked = 0;
         
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 2000
-        };
+        const options = window.APP_CONFIG.GPS_OPTIONS;
         
         this.watchId = navigator.geolocation.watchPosition(
             (position) => this.updatePosition(position),
@@ -535,6 +554,97 @@ class WalkingTimeEstimator {
         }
     }
     
+    // Use current location for start or end field
+    useCurrentLocation(field) {
+        if (!navigator.geolocation) {
+            this.showMessage('Geolocation not supported by this browser', 'error');
+            return;
+        }
+        
+        const inputField = document.getElementById(field);
+        const button = document.getElementById(field + 'CurrentBtn');
+        
+        // Show loading state
+        const originalText = button.textContent;
+        button.textContent = '🔄 Getting...';
+        button.disabled = true;
+        
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Use Google Maps Geocoding to get address from coordinates
+                const geocoder = new google.maps.Geocoder();
+                const latlng = { lat: lat, lng: lng };
+                
+                geocoder.geocode({ location: latlng }, (results, status) => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    
+                    if (status === 'OK' && results[0]) {
+                        inputField.value = results[0].formatted_address;
+                        this.showMessage(`Current location set for ${field}`, 'success');
+                        
+                        // Add marker on map to show current location
+                        if (this.currentLocationMarker) {
+                            this.currentLocationMarker.setMap(null);
+                        }
+                        this.currentLocationMarker = new google.maps.Marker({
+                            position: latlng,
+                            map: this.map,
+                            title: 'Current Location',
+                            icon: {
+                                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                                    <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="15" cy="15" r="12" fill="#4285F4" stroke="white" stroke-width="3"/>
+                                        <circle cx="15" cy="15" r="5" fill="white"/>
+                                    </svg>
+                                `),
+                                scaledSize: new google.maps.Size(30, 30)
+                            }
+                        });
+                        
+                        // Center map on current location
+                        this.map.setCenter(latlng);
+                        this.map.setZoom(15);
+                    } else {
+                        // Fallback: use coordinates directly
+                        inputField.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        this.showMessage('Location found (using coordinates)', 'success');
+                    }
+                });
+            },
+            (error) => {
+                button.textContent = originalText;
+                button.disabled = false;
+                
+                let message = 'Could not get current location: ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Location access denied. Please enable location permissions.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out.';
+                        break;
+                    default:
+                        message += 'Unknown error occurred.';
+                }
+                this.showMessage(message, 'error');
+            },
+            options
+        );
+    }
+    
     // Load speed data from localStorage
     loadSpeedData() {
         try {
@@ -605,6 +715,15 @@ class WalkingTimeEstimator {
             document.getElementById('avgSpeedDisplay').textContent = 
                 parseFloat(document.getElementById('avgSpeed').value).toFixed(1);
         });
+        
+        // Add event listeners for current location buttons
+        document.getElementById('startCurrentBtn').addEventListener('click', () => {
+            this.useCurrentLocation('start');
+        });
+        
+        document.getElementById('endCurrentBtn').addEventListener('click', () => {
+            this.useCurrentLocation('end');
+        });
     }
     
     // Show message to user
@@ -636,10 +755,147 @@ class WalkingTimeEstimator {
 let app;
 
 function initializeApp() {
+    console.log('Initializing app...');
     app = new WalkingTimeEstimator();
     app.initMap();
     app.updateSpeedHistory();
+    console.log('App initialized successfully!');
 }
+
+function calculateRoute() {
+    if (!app) {
+        alert('App is still loading. Please wait a moment and try again.');
+        return;
+    }
+    app.calculateRoute();
+}
+
+function updatePersonalSpeed() {
+    if (!app) {
+        alert('App is still loading. Please wait a moment and try again.');
+        return;
+    }
+    app.updatePersonalSpeed();
+}
+
+function toggleTracking() {
+    if (!app) {
+        alert('App is still loading. Please wait a moment and try again.');
+        return;
+    }
+    app.toggleTracking();
+}
+
+function exportData() {
+    if (!app) {
+        alert('App is still loading. Please wait a moment and try again.');
+        return;
+    }
+    app.exportData();
+}
+
+function clearData() {
+    if (!app) {
+        alert('App is still loading. Please wait a moment and try again.');
+        return;
+    }
+    app.clearData();
+}
+
+// Load Google Maps API dynamically with config
+function loadGoogleMapsAPI() {
+    console.log('Loading Google Maps API...');
+    
+    // Check if config is loaded
+    if (!window.APP_CONFIG || !window.APP_CONFIG.GOOGLE_MAPS_API_KEY) {
+        console.error('Config not loaded or API key missing. Make sure config.js exists and contains your API key.');
+        document.body.innerHTML = `
+            <div style="padding: 50px; text-align: center; font-family: Arial;">
+                <h2>⚠️ Configuration Error</h2>
+                <p>API key not found. Please:</p>
+                <ol style="text-align: left; display: inline-block; margin: 20px auto;">
+                    <li>Create <code>config.js</code> from <code>config.template.js</code></li>
+                    <li>Add your Google Maps API key to <code>config.js</code></li>
+                    <li>Refresh the page</li>
+                </ol>
+                <h3>Quick Setup:</h3>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left; display: inline-block;">
+1. Copy config.template.js to config.js
+2. Edit config.js and replace:
+   'YOUR_ACTUAL_API_KEY_HERE'
+   with your actual API key
+3. Refresh this page
+                </pre>
+            </div>
+        `;
+        return;
+    }
+
+    console.log('Config loaded successfully, API key found');
+    
+    // Check if API key looks valid
+    const apiKey = window.APP_CONFIG.GOOGLE_MAPS_API_KEY;
+    if (apiKey === 'YOUR_ACTUAL_API_KEY_HERE' || apiKey.length < 20) {
+        console.error('API key not configured properly');
+        document.body.innerHTML = `
+            <div style="padding: 50px; text-align: center; font-family: Arial;">
+                <h2>⚠️ API Key Not Configured</h2>
+                <p>Please edit <code>config.js</code> and add your actual Google Maps API key.</p>
+                <p>Current key: <code>${apiKey}</code></p>
+                <h3>How to get an API key:</h3>
+                <ol style="text-align: left; display: inline-block; margin: 20px auto;">
+                    <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                    <li>Enable Maps JavaScript API, Places API, and Directions API</li>
+                    <li>Create an API key</li>
+                    <li>Add it to config.js</li>
+                </ol>
+            </div>
+        `;
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initializeApp&loading=async`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = function() {
+        console.error('Failed to load Google Maps API. Check your API key and internet connection.');
+        document.getElementById('map').innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f9fa; color: #666;">
+                <div style="text-align: center; padding: 20px;">
+                    <h3>⚠️ Maps API Error</h3>
+                    <p>Failed to load Google Maps.</p>
+                    <p>Please check:</p>
+                    <ul style="text-align: left; display: inline-block;">
+                        <li>Your API key is correct</li>
+                        <li>The following APIs are enabled:
+                            <ul>
+                                <li>Maps JavaScript API</li>
+                                <li>Places API</li>
+                                <li>Directions API</li>
+                            </ul>
+                        </li>
+                        <li>Billing is enabled in Google Cloud Console</li>
+                        <li>Your internet connection is working</li>
+                    </ul>
+                    <p><a href="https://console.cloud.google.com/" target="_blank">Open Google Cloud Console</a></p>
+                </div>
+            </div>
+        `;
+    };
+    script.onload = function() {
+        console.log('Google Maps API script loaded successfully');
+    };
+    
+    console.log('Adding Google Maps script to page...');
+    document.head.appendChild(script);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, starting initialization...');
+    loadGoogleMapsAPI();
+});
 
 function calculateRoute() {
     app.calculateRoute();
@@ -664,8 +920,23 @@ function clearData() {
 // Service Worker registration for offline capability (optional)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => console.log('SW registered'))
-            .catch(registrationError => console.log('SW registration failed'));
+        // Check if service-worker.js exists before trying to register
+        fetch('service-worker.js', { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('✅ Service Worker registered successfully');
+                        })
+                        .catch(registrationError => {
+                            console.log('⚠️ Service Worker registration failed (optional feature):', registrationError);
+                        });
+                } else {
+                    console.log('ℹ️ Service Worker not found - offline mode disabled (this is optional)');
+                }
+            })
+            .catch(() => {
+                console.log('ℹ️ Service Worker check skipped - offline mode disabled (this is optional)');
+            });
     });
 }

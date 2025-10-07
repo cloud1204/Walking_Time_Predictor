@@ -4,7 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Walking Time Estimator</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Manifest only loaded when served over HTTP/HTTPS -->
+    <script>
+        if (window.location.protocol !== 'file:') {
+            var link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = 'manifest.json';
+            document.head.appendChild(link);
+        }
+    </script>
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Get accurate walking time estimates based on your personal speed data">
 </head>
 <body>
     <div class="container">
@@ -15,18 +26,35 @@
             <h2>📍 Route Planning</h2>
             <div class="input-group">
                 <label for="start">Start Location:</label>
-                <input type="text" id="start" placeholder="Enter starting point">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="start" placeholder="Enter starting point" style="flex: 1;">
+                    <button id="startCurrentBtn" style="width: auto; padding: 15px 20px; white-space: nowrap;">
+                        📍 Current
+                    </button>
+                </div>
             </div>
             <div class="input-group">
                 <label for="end">End Location:</label>
-                <input type="text" id="end" placeholder="Enter destination">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="end" placeholder="Enter destination" style="flex: 1;">
+                    <button id="endCurrentBtn" style="width: auto; padding: 15px 20px; white-space: nowrap;">
+                        📍 Current
+                    </button>
+                </div>
             </div>
             <button onclick="calculateRoute()">Calculate Personalized Route</button>
             <div id="routeResult"></div>
         </div>
         
         <!-- Map Container -->
-        <div id="map" class="map-container"></div>
+        <div id="map" class="map-container">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f9fa; color: #666;">
+                <div style="text-align: center;">
+                    <h3>Loading map...</h3>
+                    <p>Please wait while we load Google Maps</p>
+                </div>
+            </div>
+        </div>
         
         <!-- Personal Speed Settings -->
         <div class="section">
@@ -87,7 +115,9 @@
         </div>
     </div>
 
+    <!-- Load configuration first, then app logic -->
+    <script src="config.js"></script>
     <script src="app.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initializeApp"></script>
+    <!-- Note: Google Maps API is loaded dynamically by app.js using the key from config.js -->
 </body>
 </html>
